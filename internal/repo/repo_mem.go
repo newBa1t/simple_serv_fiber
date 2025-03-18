@@ -2,18 +2,13 @@ package repo
 
 import (
 	"fmt"
+	"sync"
 )
-
-type Task struct {
-	ID          int
-	Title       string
-	Description string
-	Status      string
-}
 
 type MemoryRepo struct {
 	tasks  map[int]Task
 	nextID int
+	mu     sync.Mutex
 }
 
 func NewMemoryRepo() *MemoryRepo {
@@ -24,6 +19,8 @@ func NewMemoryRepo() *MemoryRepo {
 }
 
 func (r *MemoryRepo) CreateTask(task Task) (int, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	taskID := r.nextID
 	task.ID = taskID
 	r.tasks[taskID] = task
@@ -32,6 +29,8 @@ func (r *MemoryRepo) CreateTask(task Task) (int, error) {
 }
 
 func (r *MemoryRepo) GetTaskByID(taskID int) (Task, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	task, ok := r.tasks[taskID]
 	if !ok {
 		return Task{}, fmt.Errorf("task not found")
@@ -40,6 +39,8 @@ func (r *MemoryRepo) GetTaskByID(taskID int) (Task, error) {
 }
 
 func (r *MemoryRepo) GetAllTasks() ([]Task, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	var taskList []Task
 	for _, task := range r.tasks {
 		taskList = append(taskList, task)
@@ -48,6 +49,8 @@ func (r *MemoryRepo) GetAllTasks() ([]Task, error) {
 }
 
 func (r *MemoryRepo) UpdateTask(task Task) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	if _, ok := r.tasks[task.ID]; !ok {
 		return fmt.Errorf("task not found")
 	}
@@ -56,6 +59,8 @@ func (r *MemoryRepo) UpdateTask(task Task) error {
 }
 
 func (r *MemoryRepo) DeleteTask(taskID int) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	if _, ok := r.tasks[taskID]; !ok {
 		return fmt.Errorf("task not found")
 	}
