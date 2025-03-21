@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 
@@ -38,13 +39,16 @@ func main() {
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "error initializing logger"))
 	}
-	zapLogger := logger.Desugar()
 
 	// Инициализация репозитория в памяти (можно переключить на PostgreSQL, если нужно)
-	repository := repo.NewMemoryRepo()
+	ctx := context.Background()                                // создаем контекст
+	repository, err := repo.NewRepository(ctx, cfg.PostgreSQL) // передаем контекст и конфиг БД
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to initialize repository"))
+	}
 
 	// Создание сервиса с бизнес-логикой
-	serviceInstance := service.NewService(zapLogger, repository)
+	serviceInstance := service.NewService(repository, logger)
 
 	// Инициализация API
 	app := api.NewRouters(&api.Routers{Service: serviceInstance}, cfg.Rest.Token)
